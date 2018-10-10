@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+import time
+
+from sklearn.naive_bayes import GaussianNB
+from sklearn.cross_validation import StratifiedKFold, cross_val_score
+
+val1=time.time()
+def getDataset(i):
+    return {
+        0: datasets.load_breast_cancer(),
+        1: datasets.load_digits(),
+        2: datasets.load_iris(),
+
+    }[i]
+
+
+def getClassifier(i):
+    return {
+        0: KNeighborsClassifier(1),
+        1: KNeighborsClassifier(3),
+        2: KNeighborsClassifier(5),
+        3: DecisionTreeClassifier(max_depth=5,min_samples_leaf=2), #Strateies used in Decision tree classifier where the depth is 5 and samples of the leaf are two
+        4: DecisionTreeClassifier(max_depth=10),
+        5: GaussianNB()
+    }[i]
+
+
+datasets_names = ['Breast Cancer', 'Digits', 'Iris']
+classifiers_names = ['KNN, k=1', 'KNN, k=3', 'KNN, k=5', 'Arvore de Decisao, d=5', 'Arvore de Decisao, d=10',
+                     'Naive-Bayes']
+
+print('---------------------------------\n')
+for i, dataset_name in enumerate(datasets_names):
+    accuracies_mean = []
+    accuracies_std = []
+
+    print('*** ' + dataset_name + ' ***')
+    dataset = getDataset(i)
+
+    X = dataset.data
+    y = dataset.target
+
+    folds = StratifiedKFold(y, 10)
+
+    for j, classifier_name in enumerate(classifiers_names):
+        print('-> ' + classifier_name)
+        clf = getClassifier(j)
+
+        accuracy = cross_val_score(clf, X, y, cv=folds, scoring='accuracy')
+        m = np.mean(accuracy)
+        accuracies_mean.append(m)
+        a = np.std(accuracy)
+        accuracies_std.append(a)
+        print('Accuracy=' + str(m) + '?' + str(a))
+
+    print('\n---------------------------------\n')
+
+    x = np.array([1, 2, 3, 4, 5, 6])
+
+    plt.figure(i + 1)
+    plt.title(dataset_name)
+    plt.xlabel('Classifier')
+    plt.ylabel('Accurary')
+    plt.errorbar(x, np.array(accuracies_mean), np.array(accuracies_std), linestyle='None', marker='^')
+    plt.xticks(x, classifiers_names)
+plt.show()
+val2=time.time()
+print('Elapsed time', val2-val1)
